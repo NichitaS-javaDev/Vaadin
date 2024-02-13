@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface IIssueRepo extends JpaRepository<Issue, Long> {
     List<Issue> findAllByCreatedByAndStatus(User user, Status status);
+    Long countAllByCreatedByAndStatus(User user, Status status);
 }

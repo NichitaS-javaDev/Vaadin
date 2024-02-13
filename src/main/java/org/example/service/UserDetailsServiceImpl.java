@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.audit.AwareUserDetails;
 import org.example.entity.User;
 import org.example.repo.IUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid Username or Email"));
         Set<GrantedAuthority> authorities = Set.of(new SimpleGrantedAuthority(user.getRole().getName()));
 
-        return new org.springframework.security.core.userdetails.User(usernameOrEmail, user.getPassword(), authorities);
+        return new AwareUserDetails(user, authorities);
     }
 }
 

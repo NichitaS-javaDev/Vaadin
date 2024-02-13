@@ -16,13 +16,15 @@ public class DashboardCard extends Div {
     private final String color;
     private final VaadinIcon icon;
     private final String description;
+    private final Long initialValue;
     private final ComponentEventListener<ClickEvent<Button>> listener;
 
-    public DashboardCard(String color, VaadinIcon icon, String description, ComponentEventListener<ClickEvent<Button>> listener) {
+    public DashboardCard(String color, VaadinIcon icon, String description, ComponentEventListener<ClickEvent<Button>> listener, Long initialValue) {
         this.color = color;
         this.icon = icon;
         this.description = description;
         this.listener = listener;
+        this.initialValue = initialValue;
 
         createCard();
     }
@@ -39,7 +41,8 @@ public class DashboardCard extends Div {
                 .setPadding("3.5%")
                 .setBackgroundColor(color)
                 .setDisplay(Style.Display.FLEX)
-                .setAlignItems(Style.AlignItems.CENTER);
+                .setAlignItems(Style.AlignItems.CENTER)
+                .setJustifyContent(Style.JustifyContent.SPACE_BETWEEN);
 
         Div bottomBoxLevel = new Div();
         bottomBoxLevel.getStyle()
@@ -55,10 +58,9 @@ public class DashboardCard extends Div {
         Span topRightText = new Span();
         topRightText.getStyle()
                 .setColor("white")
-                .setDisplay(Style.Display.INLINE_BLOCK)
-                .setMarginLeft("41%");
+                .setDisplay(Style.Display.INLINE_BLOCK);
 
-        H1 topRightTextMainText = new H1("0");
+        H1 topRightTextMainText = new H1(String.valueOf(initialValue));
         topRightTextMainText.getStyle()
                 .setColor("white");
 

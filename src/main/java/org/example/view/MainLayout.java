@@ -19,7 +19,6 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.server.VaadinSession;
 import org.example.service.SecurityService;
 
 import java.util.Optional;
@@ -41,6 +40,8 @@ public class MainLayout extends AppLayout {
 
     private Component createHeaderContent() {
         HorizontalLayout layout = new HorizontalLayout();
+        Optional<String> optionalUserName = securityService.getAuthenticatedUserName();
+        String name = optionalUserName.orElse("Undefined");
 
         layout.setId("header");
         layout.setWidthFull();
@@ -56,19 +57,17 @@ public class MainLayout extends AppLayout {
         Avatar avatar = new Avatar();
         avatar.getStyle().set("margin-left", "70%");
         avatar.getStyle().set("margin-right", "0.5%");
-        H6 currentUsername = new H6(securityService.getAuthenticatedUserName());
-//        currentUsername.getStyle().set("margin-right", "3.5%");
+        H6 currentUsername = new H6(name);
         layout.add(avatar);
         layout.add(currentUsername);
 
 
         Button logoutButton = new Button("Logout", VaadinIcon.CHEVRON_CIRCLE_RIGHT_O.create());
-//        logoutButton.getStyle().set("font-size", "1.1rem");
         logoutButton.getStyle().set("font-weight", "bold");
         logoutButton.getStyle().setColor("#36404e");
         logoutButton.getStyle().set("margin-left", "4%");
         logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        logoutButton.addClickListener(e -> VaadinSession.getCurrent().getSession().invalidate());
+        logoutButton.addClickListener(e -> securityService.logout());
         layout.add(logoutButton);
 
         return layout;
@@ -97,14 +96,21 @@ public class MainLayout extends AppLayout {
         tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
         tabs.setId("tabs");
         tabs.add(createMenuItems());
+        if (securityService.isCurrentUserAdmin()){
+            tabs.add(createAdminItems());
+        }
+
         return tabs;
     }
 
     private Tab[] createMenuItems() {
         return new Tab[] { createTab("Dashboard", VaadinIcon.DASHBOARD.create(), Dashboard.class),
                 createTab("POS", VaadinIcon.CREDIT_CARD.create(), POS.class),
-                createTab("Issues", VaadinIcon.WRENCH.create(), Issues.class),
-                createTab("Users",VaadinIcon.USER.create(), Users.class)};
+                createTab("Issues", VaadinIcon.WRENCH.create(), Issues.class)};
+    }
+
+    private Tab[] createAdminItems(){
+        return new Tab[] {createTab("Users", VaadinIcon.USER.create(), Users.class)};
     }
 
     private static Tab createTab(String text, Icon icon, Class<? extends Component> navigationTarget) {

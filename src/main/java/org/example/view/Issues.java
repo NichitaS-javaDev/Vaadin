@@ -44,7 +44,8 @@ public class Issues extends VerticalLayout {
                     issueService, userService, posService, issueStatusService, issueTypeService,
                     () -> grid.getDataProvider().refreshAll(),
                     () -> grid.getDataProvider().refreshAll(),
-                    Operation.CREATE
+                    Operation.CREATE,
+                    null
             );
             dialog.getDialog().open();
         });
@@ -81,9 +82,10 @@ public class Issues extends VerticalLayout {
                             issueService, userService, posService, issueStatusService, issueTypeService,
                             () -> grid.getDataProvider().refreshAll(),
                             () -> grid.getDataProvider().refreshAll(),
-                            Operation.MODIFY
+                            Operation.MODIFY,
+                            posItemDoubleClickEvent.getItem()
                     );
-                    dialog.setIssueEntity(posItemDoubleClickEvent.getItem());
+
                     dialog.getDialog().open();
                 }
         );

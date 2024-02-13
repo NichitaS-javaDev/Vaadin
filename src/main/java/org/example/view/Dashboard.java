@@ -27,32 +27,31 @@ public class Dashboard extends VerticalLayout {
         Span cardsSpan = new Span();
         cardsSpan.setWidth("100%");
         DashboardCard newIssuesCard = new DashboardCard("#fe4d4d", VaadinIcon.PLUS_CIRCLE_O, "New Issues",
-                buttonClickEvent -> replaceCurrentGrid("Opened"));
+                buttonClickEvent -> replaceCurrentGrid(IssueStatus.OPENED), issueService.countAllByCurrentUserAndStatus(IssueStatus.OPENED));
         newIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
         newIssuesCard.setWidth("20%");
         newIssuesCard.getStyle().setMarginLeft("1%");
 
         DashboardCard pendingIssuesCard = new DashboardCard("#fce634", VaadinIcon.REFRESH, "Pending Issue",
-                buttonClickEvent -> replaceCurrentGrid("Pending"));
+                buttonClickEvent -> replaceCurrentGrid(IssueStatus.PENDING), issueService.countAllByCurrentUserAndStatus(IssueStatus.PENDING));
         pendingIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
         pendingIssuesCard.setWidth("22%");
         pendingIssuesCard.getStyle().setMarginLeft("2.5%");
 
         DashboardCard assignedIssuesCard = new DashboardCard("#0a83fd", VaadinIcon.ARROW_FORWARD, "Assigned Issue",
-                buttonClickEvent -> replaceCurrentGrid("Assigned"));
+                buttonClickEvent -> replaceCurrentGrid(IssueStatus.ASSIGNED), issueService.countAllByCurrentUserAndStatus(IssueStatus.ASSIGNED));
         assignedIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
         assignedIssuesCard.setWidth("23%");
         assignedIssuesCard.getStyle().setMarginLeft("2.5%");
 
         DashboardCard inProgressIssuesCard = new DashboardCard("#218b21", VaadinIcon.AUTOMATION, "In Progress Issue",
-                buttonClickEvent -> replaceCurrentGrid("In Progress"));
+                buttonClickEvent -> replaceCurrentGrid(IssueStatus.IN_PROGRESS), issueService.countAllByCurrentUserAndStatus(IssueStatus.IN_PROGRESS));
         inProgressIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
         inProgressIssuesCard.setWidth("25%");
         inProgressIssuesCard.getStyle().setMarginLeft("2.5%");
 
         cardsSpan.add(newIssuesCard, pendingIssuesCard, assignedIssuesCard, inProgressIssuesCard);
         add(cardsSpan);
-
     }
 
     private void replaceCurrentGrid(String status){
@@ -78,7 +77,7 @@ public class Dashboard extends VerticalLayout {
         grid.addColumn(issue -> issue.getAssignedTo().getName()).setHeader("Assigned To").setSortable(true);
         grid.addColumn(Issue::getDescription).setHeader("Description").setSortable(true);
 
-        List<Issue> issues = issueService.findAllByUsernameAndStatus(status);
+        List<Issue> issues = issueService.findAllByCurrentUserAndStatus(status);
         grid.setItems(issues);
 
         return grid;

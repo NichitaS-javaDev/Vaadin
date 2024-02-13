@@ -16,14 +16,16 @@ public class User {
     @Size(min = 3)
     private String name;
     @Email
+    @Column(unique = true)
     private String email;
     @NotBlank
     @Size(min = 3)
+    @Column(unique = true)
     private String username;
     @NotBlank
     @Size(min = 8)
     private String password;
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(referencedColumnName = "id")
     private UserRole role;
 }

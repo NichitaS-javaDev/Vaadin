@@ -3,16 +3,20 @@ package org.example.view;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.converter.LocalDateToDateConverter;
 import com.vaadin.flow.data.validator.BeanValidator;
+import jakarta.annotation.Nullable;
 import org.example.entity.POS;
 import org.example.entity.*;
 import org.example.service.*;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,36 +32,45 @@ public class IssueDialog extends Div {
     private final IssueTypeService issueTypeService;
     private final Dialog dialog;
     private final Binder<Issue> binder;
-    private final Div dialogLayout;
-    private Issue issue = new Issue();
+    private final Issue issue;
 
     public IssueDialog(IssueService issueService, UserService userService, PosService posService, IssueStatusService issueStatusService,
-                       IssueTypeService issueTypeService, SaveCallback saveCallback, DeleteCallback deleteCallback, Operation operation){
+                       IssueTypeService issueTypeService, SaveCallback saveCallback, DeleteCallback deleteCallback, Operation operation,
+                       @Nullable Issue issue){
         this.issueStatusService = issueStatusService;
         this.posService = posService;
         this.userService = userService;
         this.issueService = issueService;
         this.issueTypeService = issueTypeService;
+        this.issue = Objects.nonNull(issue) ? issue : new Issue();
 
         dialog = new Dialog();
         binder = new Binder<>(Issue.class);
+        Div dialogLayout = createDialogLayout();
 
-        dialogLayout = createDialogLayout();
-        Button operationButton = operation.equals(Operation.CREATE) ?
-                getOperationButton("Add", saveCallback, ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS) :
-                getOperationButton("Update", saveCallback, ButtonVariant.LUMO_PRIMARY);
+        Button operationButton = null;
+        if (operation.equals(Operation.CREATE)){
+            operationButton = getOperationButton("Add", saveCallback, ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        } else {
+            if (issueService.isUserAuthorizedToModifyIssue(issue)){
+                operationButton = getOperationButton("Update", saveCallback, ButtonVariant.LUMO_PRIMARY);
+            }
+        }
         Button cancelButton = new Button("Cancel", e -> dialog.close());
 
         dialog.add(dialogLayout);
         dialog.getFooter().add(cancelButton);
-        dialog.getFooter().add(operationButton);
+        if (Objects.nonNull(operationButton)){
+            dialog.getFooter().add(operationButton);
+        }
 
         if (operation.equals(Operation.CREATE)) {
             dialog.setHeaderTitle("New Issue");
         } else {
             dialog.setHeaderTitle("Update Issue");
-            if (issueService.isCurrentUserIssueOwner(issue)){}
-            dialog.getFooter().add(getDeleteButton(deleteCallback));
+            if (issueService.isUserAuthorizedToModifyIssue(issue)){
+                dialog.getFooter().add(getDeleteButton(deleteCallback));
+            }
         }
 
         getStyle().set("position", "fixed").set("top", "0").set("right", "0")
@@ -97,12 +110,23 @@ public class IssueDialog extends Div {
         ComboBox<User> assignedTo = new ComboBox<>("Assigned to");
         assignedTo.setItems(userService.findAll());
         assignedTo.setItemLabelGenerator(User::getName);
-        assignedTo.getStyle().setMarginRight("3%").setWidth("31%");;
+        assignedTo.getStyle().setMarginRight("3%").setWidth("31%");
 
         ComboBox<Status> status = new ComboBox<>("Status");
         status.setItems(issueStatusService.findAll());
         status.setItemLabelGenerator(Status::getName);
         status.setWidth("31%");
+
+        ComboBox<User> createdBy = new ComboBox<>("Created by");
+        createdBy.setItems(userService.findAll());
+        createdBy.setItemLabelGenerator(User::getName);
+        createdBy.getStyle().setMarginRight("3%").setWidth("31%");
+
+        DatePicker creationDate = new DatePicker("Creation date");
+        creationDate.getStyle().setMarginRight("3%").setWidth("31%");
+
+        DatePicker assignedDate = new DatePicker("Assigned date");
+        assignedDate.setWidth("31%");
 
         TextArea description = new TextArea("Description");
         description.getStyle().setMarginRight("5%").setWidth("40%").setMinHeight("10rem");
@@ -115,13 +139,16 @@ public class IssueDialog extends Div {
         binder.forField(mainType).withValidator(Objects::nonNull, "Please select the main type").bind(Issue::getMainType, Issue::setMainType);
         binder.forField(subType).withValidator(Objects::nonNull, "Please select the sub type").bind(Issue::getSubType, Issue::setSubType);
         binder.forField(priority).withValidator(Objects::nonNull, "Please select priority").bind(Issue::getPriority, Issue::setPriority);
-        binder.forField(assignedTo).withValidator(Objects::nonNull, "Please select the user to assign to").bind(Issue::getAssignedTo, Issue::setAssignedTo);
+        binder.forField(assignedTo).bind(Issue::getAssignedTo, Issue::setAssignedTo);
         binder.forField(status).withValidator(Objects::nonNull, "Please select the status").bind(Issue::getStatus, Issue::setStatus);
-        binder.forField(description).withValidator(new BeanValidator(Issues.class, "description")).bind(Issue::getDescription, Issue::setDescription);
-        binder.forField(solution).withValidator(new BeanValidator(Issues.class, "solution")).bind(Issue::getSolution, Issue::setSolution);
+        binder.forField(description).withValidator(new BeanValidator(Issue.class, "description")).bind(Issue::getDescription, Issue::setDescription);
+        binder.forField(solution).withValidator(new BeanValidator(Issue.class, "solution")).bind(Issue::getSolution, Issue::setSolution);
+        binder.forField(createdBy).bindReadOnly(Issue::getCreatedBy);
+        binder.forField(creationDate).withConverter(new LocalDateToDateConverter(ZoneId.systemDefault())).bindReadOnly(Issue::getCreationDate);
+        binder.forField(assignedDate).withConverter(new LocalDateToDateConverter(ZoneId.systemDefault())).bindReadOnly(Issue::getAssignedDate);
 
         Div dialogLayout = new Div(
-                title, posName, mainType, subType, priority, assignedTo, status, description, solution
+                title, posName, mainType, subType, priority, assignedTo, status, description, solution, createdBy, creationDate, assignedDate
         );
 
         dialogLayout.setWidth("75vw");
@@ -137,6 +164,7 @@ public class IssueDialog extends Div {
                 saveCallback.onSave();
             } catch (Exception ex){
                 ErrorNotification.show("An Error occurred when saving. Please check provided data");
+                ex.printStackTrace();
             }
 
         });
@@ -153,19 +181,13 @@ public class IssueDialog extends Div {
                 deleteCallback.onDelete();
             } catch (Exception e){
                 ErrorNotification.show("An Error occurred while trying to delete the entity");
+                e.printStackTrace();
             }
 
         });
         deleteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
 
         return deleteButton;
-    }
-
-    public IssueDialog setIssueEntity(Issue issue) {
-        this.issue = issue;
-        dialog.remove(dialogLayout);
-        dialog.add(createDialogLayout());
-        return this;
     }
 
     public Dialog getDialog() {
