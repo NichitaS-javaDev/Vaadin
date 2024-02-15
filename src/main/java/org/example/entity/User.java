@@ -13,19 +13,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank
-    @Size(min = 3)
+    @Size(min = 3, max = 15)
     private String name;
     @Email
     @Column(unique = true)
     private String email;
     @NotBlank
-    @Size(min = 3)
+    @Size(min = 3, max = 10)
     @Column(unique = true)
     private String username;
     @NotBlank
-    @Size(min = 8)
+    @Size(min = 8, max = 25)
     private String password;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private UserRole role;
 }

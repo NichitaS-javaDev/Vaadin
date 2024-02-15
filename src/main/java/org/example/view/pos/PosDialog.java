@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.pos;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -11,40 +11,41 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.BeanValidator;
+import org.example.callback.DeleteCallback;
+import org.example.callback.SaveCallback;
+import org.example.constants.Operation;
 import org.example.entity.City;
 import org.example.entity.ConnectionType;
 import org.example.entity.POS;
 import org.example.service.CityService;
 import org.example.service.ConnectionTypeService;
 import org.example.service.PosService;
+import org.example.view.ErrorNotification;
+import org.springframework.lang.Nullable;
 
 import java.util.Objects;
 
 public class PosDialog extends Div {
-    @FunctionalInterface
-    interface SaveCallback { void onSave(); }
-    @FunctionalInterface
-    interface DeleteCallback { void onDelete(); }
     private final ConnectionTypeService connectionTypeService;
     private final CityService cityService;
     private final PosService posService;
     private final Dialog dialog;
     private final Binder<POS> binder;
-    private final VerticalLayout dialogLayout;
-    private POS pos = new POS();
+    private final POS pos;
 
     public PosDialog(
             ConnectionTypeService connectionTypeService, CityService cityService, PosService posService, SaveCallback saveCallback,
-            DeleteCallback deleteCallback, Operation operation
-    ) {
+            DeleteCallback deleteCallback, Operation operation, @Nullable POS pos
+            ) {
         this.connectionTypeService = connectionTypeService;
         this.cityService = cityService;
         this.posService = posService;
+        this.pos = Objects.nonNull(pos) ? pos : new POS();
 
         dialog = new Dialog();
         binder = new Binder<>(POS.class);
 
-        dialogLayout = createDialogLayout();
+        VerticalLayout dialogLayout = createDialogLayout();
         Button operationButton = operation.equals(Operation.CREATE) ?
                 getOperationButton("Add", saveCallback, ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS) :
                 getOperationButton("Update", saveCallback, ButtonVariant.LUMO_PRIMARY);
@@ -96,10 +97,10 @@ public class PosDialog extends Div {
         binder.forField(address).withValidator(new BeanValidator(POS.class, "address")).bind(POS::getAddress, POS::setAddress);
         binder.forField(countryCode)
                 .withValidator(
-                        code -> code.matches("^\\+[0-9]{1,3}+$\n"), "Please provide a valid country code starting with '+' followed by max 3 digits"
+                        code -> code.matches("^\\+[0-9]{1,3}$"), "Please provide a valid country code starting with '+' followed by max 3 digits"
                 ).bind(POS::getCountryCode, POS::setCountryCode);
         binder.forField(telephone).withValidator(
-                code -> code.matches("^[0-9]+$\n"), "Please provide a valid phone number containing only digits"
+                tel -> tel.matches("^[0-9]+$"), "Please provide a valid phone number containing only digits"
         ).bind(POS::getTelephone, POS::setTelephone);
         binder.forField(opening).withValidator(Objects::nonNull, "This field is required").bind(POS::getOpening, POS::setOpening);
         binder.forField(closing).withValidator(Objects::nonNull, "This field is required").bind(POS::getClosing, POS::setClosing);
@@ -118,19 +119,20 @@ public class PosDialog extends Div {
     }
 
     private Button getOperationButton(String text, SaveCallback saveCallback, ButtonVariant... variant) {
-        Button saveButton = new Button(text, e -> {
+        Button operationButton = new Button(text, e -> {
             try {
                 posService.save(binder.getBean());
-                dialog.close();
                 saveCallback.onSave();
+                dialog.close();
             } catch (Exception ex){
                 ErrorNotification.show("An Error occurred when saving. Please check provided data");
+                ex.printStackTrace();
             }
 
         });
-        saveButton.addThemeVariants(variant);
+        operationButton.addThemeVariants(variant);
 
-        return saveButton;
+        return operationButton;
     }
 
     private Button getDeleteButton(DeleteCallback deleteCallback){
@@ -139,21 +141,15 @@ public class PosDialog extends Div {
                 posService.delete(binder.getBean());
                 dialog.close();
                 deleteCallback.onDelete();
-            } catch (Exception e){
+            } catch (Exception ex){
                 ErrorNotification.show("An Error occurred while trying to delete the entity");
+                ex.printStackTrace();
             }
 
         });
         deleteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
 
         return deleteButton;
-    }
-
-    public PosDialog setPosEntity(POS pos) {
-        this.pos = pos;
-        dialog.remove(dialogLayout);
-        dialog.add(createDialogLayout());
-        return this;
     }
 
     public Dialog getDialog() {

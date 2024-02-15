@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.dashboard;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;
@@ -9,10 +9,13 @@ import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.example.constants.IssueStatus;
 import org.example.entity.Issue;
 import org.example.service.IssueService;
+import org.example.view.MainLayout;
 
 import java.util.List;
+import java.util.Objects;
 
 @PageTitle("Dashboard")
 @Route(value = "", layout = MainLayout.class)
@@ -32,12 +35,6 @@ public class Dashboard extends VerticalLayout {
         newIssuesCard.setWidth("20%");
         newIssuesCard.getStyle().setMarginLeft("1%");
 
-        DashboardCard pendingIssuesCard = new DashboardCard("#fce634", VaadinIcon.REFRESH, "Pending Issue",
-                buttonClickEvent -> replaceCurrentGrid(IssueStatus.PENDING), issueService.countAllByCurrentUserAndStatus(IssueStatus.PENDING));
-        pendingIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
-        pendingIssuesCard.setWidth("22%");
-        pendingIssuesCard.getStyle().setMarginLeft("2.5%");
-
         DashboardCard assignedIssuesCard = new DashboardCard("#0a83fd", VaadinIcon.ARROW_FORWARD, "Assigned Issue",
                 buttonClickEvent -> replaceCurrentGrid(IssueStatus.ASSIGNED), issueService.countAllByCurrentUserAndStatus(IssueStatus.ASSIGNED));
         assignedIssuesCard.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
@@ -50,7 +47,13 @@ public class Dashboard extends VerticalLayout {
         inProgressIssuesCard.setWidth("25%");
         inProgressIssuesCard.getStyle().setMarginLeft("2.5%");
 
-        cardsSpan.add(newIssuesCard, pendingIssuesCard, assignedIssuesCard, inProgressIssuesCard);
+        DashboardCard closedIssue = new DashboardCard("#f7d100", VaadinIcon.REFRESH, "Closed Issue",
+                buttonClickEvent -> replaceCurrentGrid(IssueStatus.CLOSED), issueService.countAllByCurrentUserAndStatus(IssueStatus.CLOSED));
+        closedIssue.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
+        closedIssue.setWidth("22%");
+        closedIssue.getStyle().setMarginLeft("2.5%");
+
+        cardsSpan.add(newIssuesCard, assignedIssuesCard, inProgressIssuesCard, closedIssue);
         add(cardsSpan);
     }
 
@@ -74,7 +77,7 @@ public class Dashboard extends VerticalLayout {
         grid.addColumn(Issue::getCreationDate).setHeader("Date").setSortable(true);
         grid.addColumn(issue -> issue.getMainType().getName()).setHeader("Issue Type").setSortable(true);
         grid.addColumn(issue -> issue.getStatus().getName()).setHeader("Issue Status").setSortable(true);
-        grid.addColumn(issue -> issue.getAssignedTo().getName()).setHeader("Assigned To").setSortable(true);
+        grid.addColumn(issue -> Objects.nonNull(issue.getAssignedTo()) ? issue.getAssignedTo().getName() : "Unassigned").setHeader("Assigned To").setSortable(true);
         grid.addColumn(Issue::getDescription).setHeader("Description").setSortable(true);
 
         List<Issue> issues = issueService.findAllByCurrentUserAndStatus(status);

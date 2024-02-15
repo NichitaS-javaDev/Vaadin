@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.pos;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -13,9 +13,11 @@ import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.example.constants.Operation;
 import org.example.service.CityService;
 import org.example.service.ConnectionTypeService;
 import org.example.service.PosService;
+import org.example.view.MainLayout;
 
 @PageTitle("POS")
 @Route(value = "pos", layout = MainLayout.class)
@@ -37,7 +39,8 @@ public class POS extends VerticalLayout {
                     connectionTypeService, cityService, posService,
                     () -> grid.getDataProvider().refreshAll(),
                     () -> grid.getDataProvider().refreshAll(),
-                    Operation.CREATE
+                    Operation.CREATE,
+                    null
             );
             dialog.getDialog().open();
         });
@@ -65,14 +68,15 @@ public class POS extends VerticalLayout {
         grid.setItems(query -> posService.fetchPage(query.getPage(), query.getLimit()).stream());
 
         grid.addItemDoubleClickListener(
-                posItemDoubleClickEvent ->{
+                itemDoubleClickEvent ->{
+                    org.example.entity.POS selected = itemDoubleClickEvent.getItem();
                     dialog = new PosDialog(
                             connectionTypeService, cityService, posService,
                             () -> grid.getDataProvider().refreshAll(),
                             () -> grid.getDataProvider().refreshAll(),
-                            Operation.MODIFY
+                            Operation.MODIFY,
+                            selected
                     );
-                    dialog.setPosEntity(posItemDoubleClickEvent.getItem());
                     dialog.getDialog().open();
                 }
         );
@@ -85,23 +89,8 @@ public class POS extends VerticalLayout {
         searchField.setPlaceholder("Search");
         searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
-//        searchField.addValueChangeListener(e -> dataView.refreshAll());
 
         return searchField;
 
-//        dataView.addFilter(person -> {
-//            String searchTerm = searchField.getValue().trim();
-//
-//            if (searchTerm.isEmpty())
-//                return true;
-//
-//            boolean matchesFullName = matchesTerm(person.getFullName(),
-//                    searchTerm);
-//            boolean matchesEmail = matchesTerm(person.getEmail(), searchTerm);
-//            boolean matchesProfession = matchesTerm(person.getProfession(),
-//                    searchTerm);
-//
-//            return matchesFullName || matchesEmail || matchesProfession;
-//        });
     }
 }

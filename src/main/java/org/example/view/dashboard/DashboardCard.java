@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.dashboard;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;

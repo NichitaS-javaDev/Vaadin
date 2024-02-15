@@ -16,23 +16,6 @@ public class PosService {
         this.posRepo = posRepo;
     }
 
-//    public List<POS> findAll(){
-//        return posRepo.findAll();
-//    }
-
-//    public DataProvider<POS, Void> getDataProvider() {
-//        return DataProvider.fromCallbacks(
-//                query -> {
-//                    int page = query.getPage();
-//                    int limit = query.getLimit();
-//                    List<POS> items = fetchPage(page, limit);
-//
-//                    return items.stream();
-//                },
-//                query -> getTotalItemCount()
-//        );
-//    }
-
     public List<POS> findAll(){
         return posRepo.findAll();
     }
@@ -44,10 +27,6 @@ public class PosService {
     public void delete(POS pos) {
         posRepo.delete(pos);
     }
-
-//    private int getTotalItemCount() {
-//        return (int) posRepo.count();
-//    }
 
     public POS save(@Valid POS pos) {
         return posRepo.save(pos);

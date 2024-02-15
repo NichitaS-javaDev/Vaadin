@@ -16,20 +16,20 @@ public class POS {
     private Long id;
     @Size(min = 3, max = 15)
     private String name;
-    @Pattern(regexp = "^\\+[0-9]{1,3}+$\n")
+    @Pattern(regexp = "^\\+[0-9]{1,3}$")
     private String countryCode;
-    @Pattern(regexp = "^[0-9]+$\n")
+    @Pattern(regexp = "^[0-9]+$")
     private String telephone;
     @Size(min = 5, max = 25)
     private String address;
-    @ManyToOne(cascade = CascadeType.MERGE)
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private City city;
     @Size(min = 3, max = 15)
     private String model;
     @Size(min = 3, max = 15)
     private String brand;
-    @ManyToOne(cascade = CascadeType.MERGE)
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private ConnectionType connType;
     @NotNull

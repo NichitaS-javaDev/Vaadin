@@ -20,6 +20,10 @@ import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.RouterLink;
 import org.example.service.SecurityService;
+import org.example.view.dashboard.Dashboard;
+import org.example.view.issue.Issues;
+import org.example.view.pos.POS;
+import org.example.view.user.Users;
 
 import java.util.Optional;
 

@@ -19,27 +19,27 @@ public class Issue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private POS pos;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private IssueType mainType;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private IssueType subType;
     @Size(min = 5, max = 25)
     private String title;
     @Min(1) @Max(5)
     private Integer priority;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private Status status;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     @CreatedBy
     private User createdBy;
-    @ManyToOne(cascade = {CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(referencedColumnName = "id")
     private User assignedTo;
     @Size(min = 10, max = 255)

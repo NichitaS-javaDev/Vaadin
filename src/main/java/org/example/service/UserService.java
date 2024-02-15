@@ -3,6 +3,7 @@ package org.example.service;
 import jakarta.validation.Valid;
 import org.example.entity.User;
 import org.example.repo.IUserRepo;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,10 @@ public class UserService {
         return userRepo.findAll();
     }
 
+    public List<User> fetchPage(int page, int limit) {
+        return userRepo.findAll(PageRequest.of(page, limit)).getContent();
+    }
+
     public void save(@Valid User user){
         if (Objects.isNull(user.getId())){
             String encryptedPass = passwordEncoder.encode(user.getPassword());
@@ -31,5 +36,9 @@ public class UserService {
         } else {
             userRepo.save(user);
         }
+    }
+
+    public void delete(User user){
+        userRepo.delete(user);
     }
 }

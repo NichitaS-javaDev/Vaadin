@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.issue;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -13,12 +13,15 @@ import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.example.constants.Operation;
 import org.example.entity.Issue;
 import org.example.service.*;
+import org.example.view.MainLayout;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 @PageTitle("Issues")
 @Route(value = "issues", layout = MainLayout.class)
@@ -39,7 +42,7 @@ public class Issues extends VerticalLayout {
         this.userService = userService;
         this.issueTypeService = issueTypeService;
 
-        Button createPosBtn = new Button("Create Issue", buttonClickEvent -> {
+        Button createIssueBtn = new Button("Create Issue", buttonClickEvent -> {
             dialog = new IssueDialog(
                     issueService, userService, posService, issueStatusService, issueTypeService,
                     () -> grid.getDataProvider().refreshAll(),
@@ -50,7 +53,7 @@ public class Issues extends VerticalLayout {
             dialog.getDialog().open();
         });
 
-        HorizontalLayout topGridLayout = new HorizontalLayout(getSearchField(), createPosBtn);
+        HorizontalLayout topGridLayout = new HorizontalLayout(getSearchField(), createIssueBtn);
         topGridLayout.getStyle().setDisplay(Style.Display.FLEX).setJustifyContent(Style.JustifyContent.SPACE_BETWEEN).setWidth("100%");
 
         add(topGridLayout, createGrid());
@@ -70,20 +73,22 @@ public class Issues extends VerticalLayout {
         }).setHeader("Creation date").setSortable(true);
         grid.addColumn(Issue::getPriority).setHeader("Priority").setSortable(true);
         grid.addColumn(Issue::getDescription).setHeader("Description").setSortable(true);
-        grid.addColumn(issue -> issue.getAssignedTo().getName()).setHeader("Assigned to").setSortable(true);
+        grid.addColumn(issue -> Objects.nonNull(issue.getAssignedTo()) ? issue.getAssignedTo().getName() : "Unassigned").setHeader("Assigned to").setSortable(true);
         grid.addColumn(issue -> issue.getStatus().getName()).setHeader("Status").setSortable(true);
         grid.addColumn(Issue::getSolution).setHeader("Solution").setSortable(true);
 
         grid.setItems(query -> issueService.fetchPage(query.getPage(), query.getLimit()).stream());
 
         grid.addItemDoubleClickListener(
-                posItemDoubleClickEvent ->{
+                itemDoubleClickEvent ->{
+//                    ErrorNotification.show("Error");
+                    Issue selected = itemDoubleClickEvent.getItem();
                     dialog = new IssueDialog(
                             issueService, userService, posService, issueStatusService, issueTypeService,
                             () -> grid.getDataProvider().refreshAll(),
                             () -> grid.getDataProvider().refreshAll(),
                             Operation.MODIFY,
-                            posItemDoubleClickEvent.getItem()
+                            selected
                     );
 
                     dialog.getDialog().open();

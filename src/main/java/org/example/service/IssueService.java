@@ -6,7 +6,6 @@ import org.example.entity.Status;
 import org.example.entity.User;
 import org.example.repo.IIssueRepo;
 import org.example.repo.IStatusRepo;
-import org.example.repo.IUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -20,14 +19,12 @@ import java.util.Optional;
 @Service
 public class IssueService {
     private final IIssueRepo issueRepo;
-    private final IUserRepo userRepo;
     private final IStatusRepo statusRepo;
     private final SecurityService securityService;
 
     @Autowired
-    public IssueService(IIssueRepo issueRepo, IUserRepo userRepo, IStatusRepo statusRepo, SecurityService securityService) {
+    public IssueService(IIssueRepo issueRepo, IStatusRepo statusRepo, SecurityService securityService) {
         this.issueRepo = issueRepo;
-        this.userRepo = userRepo;
         this.statusRepo = statusRepo;
         this.securityService = securityService;
     }
@@ -41,7 +38,12 @@ public class IssueService {
     private boolean isIssueAssignedToCurrentUser(Issue issue){
         Optional<String> optionalUsername = securityService.getAuthenticatedUserName();
 
-        return optionalUsername.map(s -> s.equals(issue.getAssignedTo().getName())).orElse(false);
+        User assignedTo = issue.getAssignedTo();
+        if (Objects.nonNull(assignedTo)){
+            return optionalUsername.map(s -> s.equals(assignedTo.getName())).orElse(false);
+        }
+
+        return false;
     }
 
     public boolean isUserAuthorizedToModifyIssue(Issue issue){
@@ -74,19 +76,21 @@ public class IssueService {
 
     public void save(@Valid Issue issue){
         Long id = issue.getId();
-        if (Objects.nonNull(id)){
-            Optional<Issue> optionalIssue = issueRepo.findById(id);
-            if (optionalIssue.isPresent()) {
-                Issue currentIssue = optionalIssue.get();
-                if (!currentIssue.getAssignedTo().getUsername().equals(issue.getAssignedTo().getUsername())) {
-                    issue.setAssignedDate(new Date(new java.util.Date().getTime()));
-                }
-            }
-        } else {
-            if (Objects.nonNull(issue.getAssignedTo())){
+        if (Objects.isNull(id)) {
+            if (Objects.nonNull(issue.getAssignedTo())) {
                 issue.setAssignedDate(new Date(new java.util.Date().getTime()));
             }
+        } else {
+            Optional<Issue> optionalIssue = issueRepo.findById(id);
+            optionalIssue.ifPresent(currentIssue -> {
+                User currentAssignedTo = currentIssue.getAssignedTo();
+                User newAssignedTo = issue.getAssignedTo();
+                if (!Objects.equals(currentAssignedTo, newAssignedTo)) {
+                    issue.setAssignedDate(new Date(new java.util.Date().getTime()));
+                }
+            });
         }
+
 
         issueRepo.save(issue);
     }

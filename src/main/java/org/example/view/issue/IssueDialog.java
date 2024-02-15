@@ -1,5 +1,7 @@
-package org.example.view;
+package org.example.view.issue;
 
+import com.vaadin.flow.component.AbstractSinglePropertyField;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -12,19 +14,18 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.converter.LocalDateToDateConverter;
 import com.vaadin.flow.data.validator.BeanValidator;
 import jakarta.annotation.Nullable;
-import org.example.entity.POS;
+import org.example.callback.DeleteCallback;
+import org.example.callback.SaveCallback;
+import org.example.constants.Operation;
 import org.example.entity.*;
 import org.example.service.*;
+import org.example.view.ErrorNotification;
 
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
 public class IssueDialog extends Div {
-    @FunctionalInterface
-    interface SaveCallback { void onSave(); }
-    @FunctionalInterface
-    interface DeleteCallback { void onDelete(); }
     private final IssueStatusService issueStatusService;
     private final PosService posService;
     private final UserService userService;
@@ -148,7 +149,9 @@ public class IssueDialog extends Div {
         binder.forField(assignedDate).withConverter(new LocalDateToDateConverter(ZoneId.systemDefault())).bindReadOnly(Issue::getAssignedDate);
 
         Div dialogLayout = new Div(
-                title, posName, mainType, subType, priority, assignedTo, status, description, solution, createdBy, creationDate, assignedDate
+                setAllDisabledIfNotAllowed(
+                        title, posName, mainType, subType, priority, assignedTo, status, description, solution, createdBy, creationDate, assignedDate
+                )
         );
 
         dialogLayout.setWidth("75vw");
@@ -157,7 +160,7 @@ public class IssueDialog extends Div {
     }
 
     private Button getOperationButton(String text, SaveCallback saveCallback, ButtonVariant... variant) {
-        Button saveButton = new Button(text, e -> {
+        Button operationButton = new Button(text, buttonClickEvent -> {
             try {
                 issueService.save(binder.getBean());
                 dialog.close();
@@ -168,9 +171,9 @@ public class IssueDialog extends Div {
             }
 
         });
-        saveButton.addThemeVariants(variant);
+        operationButton.addThemeVariants(variant);
 
-        return saveButton;
+        return operationButton;
     }
 
     private Button getDeleteButton(DeleteCallback deleteCallback){
@@ -179,15 +182,25 @@ public class IssueDialog extends Div {
                 issueService.delete(binder.getBean());
                 dialog.close();
                 deleteCallback.onDelete();
-            } catch (Exception e){
+            } catch (Exception ex){
                 ErrorNotification.show("An Error occurred while trying to delete the entity");
-                e.printStackTrace();
+                ex.printStackTrace();
             }
 
         });
         deleteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
 
         return deleteButton;
+    }
+
+    public Component[] setAllDisabledIfNotAllowed(AbstractSinglePropertyField<?,?>... components){
+        if (!issueService.isUserAuthorizedToModifyIssue(issue)){
+            for (AbstractSinglePropertyField<?,?> cmp : components){
+                cmp.setEnabled(false);
+            }
+        }
+
+        return components;
     }
 
     public Dialog getDialog() {
